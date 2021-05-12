@@ -24,37 +24,35 @@ export default function Discover() {
       .then((autRes) => {
         setToken(autRes.data.access_token);
 
-        axios(spotApi.baseUrl + "/browse/new-releases", {
+        const action = {
           method: "GET",
           headers: { authorization: "Bearer " + autRes.data.access_token },
-        })
-          .then((newReleaseRes) => {
-            setNewReleases(newReleaseRes.data.albums.items);
-          })
-          .catch((err) => {
-            console.log("release err --", err);
-          });
+        };
 
-        axios(spotApi.baseUrl + "/browse/featured-playlists", {
-          method: "GET",
-          headers: { authorization: "Bearer " + autRes.data.access_token },
-        })
-          .then((playlistsRes) => {
-            setPlaylists(playlistsRes.data.playlists.items);
-          })
-          .catch((err) => {
-            console.log("playlist err --", err);
-          });
+        const newReleaseReq = axios(
+          spotApi.baseUrl + "/browse/new-releases",
+          action
+        );
+        const playlistReq = axios(
+          spotApi.baseUrl + "/browse/featured-playlists",
+          action
+        );
+        const categoriesReq = axios(
+          spotApi.baseUrl + "/browse/categories",
+          action
+        );
 
-        axios(spotApi.baseUrl + "/browse/categories", {
-          method: "GET",
-          headers: { authorization: "Bearer " + autRes.data.access_token },
-        })
-          .then((categoriesRes) => {
-            setCategories(categoriesRes.data.categories.items);
-          })
+        axios
+          .all([newReleaseReq, playlistReq, categoriesReq])
+          .then(
+            axios.spread((...response) => {
+              setNewReleases(response[0].data.albums.items);
+              setPlaylists(response[1].data.playlists.items);
+              setCategories(response[2].data.categories.items);
+            })
+          )
           .catch((err) => {
-            console.log("category err --", err);
+            console.error("data err", err);
           });
       })
       .catch((err) => {
