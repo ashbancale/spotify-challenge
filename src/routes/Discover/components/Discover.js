@@ -1,27 +1,65 @@
-import React, { Component } from 'react';
-import DiscoverBlock from './DiscoverBlock/components/DiscoverBlock';
-import '../styles/_discover.scss';
+import React, { useState, useEffect } from "react";
+import DiscoverBlock from "./DiscoverBlock/components/DiscoverBlock";
+import "../styles/_discover.scss";
+import axios from "axios";
+import spotify from "../../../config";
 
-export default class Discover extends Component {
-  constructor() {
-    super();
+export default function Discover() {
+  const spotApi = spotify.api;
+  const [token, setToken] = useState("");
+  const [newReleases, setNewReleases] = useState([]);
+  const [playlists, setPlaylists] = useState([]);
+  const [categories, setCategories] = useState([]);
 
-    this.state = {
-      newReleases: [],
-      playlists: [],
-      categories: []
-    };
-  }
+  useEffect(() => {
+    axios(spotApi.authUrl, {
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        authorization:
+          "basic " + btoa(spotApi.clientId + ":" + spotApi.clientSecret),
+      },
+      data: "grant_type=client_credentials",
+      method: "POST",
+    }).then((autRes) => {
+      setToken(autRes.data.access_token);
 
-  render() {
-    const { newReleases, playlists, categories } = this.state;
+      axios(spotApi.baseUrl + "/browse/new-releases", {
+        method: "GET",
+        headers: { authorization: "Bearer " + autRes.data.access_token },
+      }).then((newReleaseRes) => {
+        setNewReleases(newReleaseRes.data.albums.items);
+      });
 
-    return (
-      <div className="discover">
-        <DiscoverBlock text="RELEASED THIS WEEK" id="released" data={newReleases} />
-        <DiscoverBlock text="FEATURED PLAYLISTS" id="featured" data={playlists} />
-        <DiscoverBlock text="BROWSE" id="browse" data={categories} imagesKey="icons" />
-      </div>
-    );
-  }
+      axios(spotApi.baseUrl + "/browse/featured-playlists", {
+        method: "GET",
+        headers: { authorization: "Bearer " + autRes.data.access_token },
+      }).then((playlistsRes) => {
+        setPlaylists(playlistsRes.data.playlists.items);
+      });
+
+      axios(spotApi.baseUrl + "/browse/categories", {
+        method: "GET",
+        headers: { authorization: "Bearer " + autRes.data.access_token },
+      }).then((categoriesRes) => {
+        setCategories(categoriesRes.data.categories.items);
+      });
+    });
+  }, [spotApi.authUrl, spotApi, spotApi.clientId, spotApi.clientSecret]);
+
+  return (
+    <div className="discover">
+      <DiscoverBlock
+        text="RELEASED THIS WEEK"
+        id="released"
+        data={newReleases}
+      />
+      <DiscoverBlock text="FEATURED PLAYLISTS" id="featured" data={playlists} />
+      <DiscoverBlock
+        text="BROWSE"
+        id="browse"
+        data={categories}
+        imagesKey="icons"
+      />
+    </div>
+  );
 }
