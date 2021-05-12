@@ -20,31 +20,52 @@ export default function Discover() {
       },
       data: "grant_type=client_credentials",
       method: "POST",
-    }).then((autRes) => {
-      setToken(autRes.data.access_token);
+    })
+      .then((autRes) => {
+        setToken(autRes.data.access_token);
 
-      axios(spotApi.baseUrl + "/browse/new-releases", {
-        method: "GET",
-        headers: { authorization: "Bearer " + autRes.data.access_token },
-      }).then((newReleaseRes) => {
-        setNewReleases(newReleaseRes.data.albums.items);
-      });
+        axios(spotApi.baseUrl + "/browse/new-releases", {
+          method: "GET",
+          headers: { authorization: "Bearer " + autRes.data.access_token },
+        })
+          .then((newReleaseRes) => {
+            setNewReleases(newReleaseRes.data.albums.items);
+          })
+          .catch((err) => {
+            console.log("release err --", err);
+          });
 
-      axios(spotApi.baseUrl + "/browse/featured-playlists", {
-        method: "GET",
-        headers: { authorization: "Bearer " + autRes.data.access_token },
-      }).then((playlistsRes) => {
-        setPlaylists(playlistsRes.data.playlists.items);
-      });
+        axios(spotApi.baseUrl + "/browse/featured-playlists", {
+          method: "GET",
+          headers: { authorization: "Bearer " + autRes.data.access_token },
+        })
+          .then((playlistsRes) => {
+            setPlaylists(playlistsRes.data.playlists.items);
+          })
+          .catch((err) => {
+            console.log("playlist err --", err);
+          });
 
-      axios(spotApi.baseUrl + "/browse/categories", {
-        method: "GET",
-        headers: { authorization: "Bearer " + autRes.data.access_token },
-      }).then((categoriesRes) => {
-        setCategories(categoriesRes.data.categories.items);
+        axios(spotApi.baseUrl + "/browse/categories", {
+          method: "GET",
+          headers: { authorization: "Bearer " + autRes.data.access_token },
+        })
+          .then((categoriesRes) => {
+            setCategories(categoriesRes.data.categories.items);
+          })
+          .catch((err) => {
+            console.log("category err --", err);
+          });
+      })
+      .catch((err) => {
+        console.log("token err --", err);
       });
-    });
-  }, [spotApi.authUrl, spotApi, spotApi.clientId, spotApi.clientSecret]);
+  }, [
+    spotApi.authUrl,
+    spotApi.baseUrl,
+    spotApi.clientId,
+    spotApi.clientSecret,
+  ]);
 
   return (
     <div className="discover">
